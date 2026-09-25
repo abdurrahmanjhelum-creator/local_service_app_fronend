@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/entities/chat_conversation_entity.dart';
 import '../domain/entities/chat_message_entity.dart';
@@ -12,6 +13,7 @@ import '../domain/usecases/send_typing_indicator_usecase.dart';
 import '../domain/usecases/mark_messages_read_usecase.dart';
 import '../data/repositories/chat_repository_impl.dart';
 import '../data/datasources/chat_remote_datasource.dart';
+import '../utils/api_constants.dart';
 
 /// Chat State - Represents the state of the chat system
 class ChatState {
@@ -20,6 +22,7 @@ class ChatState {
   final ChatConversationEntity? currentConversation;
   final bool isLoading;
   final bool isSending;
+  final bool isDeleting;
   final String? errorMessage;
   final Map<String, bool> typingUsers;
   final bool hasUnreadMessages;
@@ -30,6 +33,7 @@ class ChatState {
     this.currentConversation,
     this.isLoading = false,
     this.isSending = false,
+    this.isDeleting = false,
     this.errorMessage,
     this.typingUsers = const {},
     this.hasUnreadMessages = false,
@@ -41,6 +45,7 @@ class ChatState {
     ChatConversationEntity? currentConversation,
     bool? isLoading,
     bool? isSending,
+    bool? isDeleting,
     String? errorMessage,
     Map<String, bool>? typingUsers,
     bool? hasUnreadMessages,
@@ -51,6 +56,7 @@ class ChatState {
       currentConversation: currentConversation ?? this.currentConversation,
       isLoading: isLoading ?? this.isLoading,
       isSending: isSending ?? this.isSending,
+      isDeleting: isDeleting ?? this.isDeleting,
       errorMessage: errorMessage,
       typingUsers: typingUsers ?? this.typingUsers,
       hasUnreadMessages: hasUnreadMessages ?? this.hasUnreadMessages,
@@ -72,6 +78,11 @@ class ChatNotifier extends Notifier<ChatState> {
   StreamSubscription? _messageSubscription;
   StreamSubscription? _conversationSubscription;
   StreamSubscription? _typingSubscription;
+  Timer? _conversationPollTimer;
+  Timer? _messagePollTimer;
+  bool _isPollingConversations = false;
+  bool _isPollingMessages = false;
+  String? _activeConversationId;
 
   @override
   ChatState build() {
@@ -89,6 +100,8 @@ class ChatNotifier extends Notifier<ChatState> {
       _messageSubscription?.cancel();
       _conversationSubscription?.cancel();
       _typingSubscription?.cancel();
+      _conversationPollTimer?.cancel();
+      _messagePollTimer?.cancel();
     });
     
     return ChatState();
@@ -97,17 +110,16 @@ class ChatNotifier extends Notifier<ChatState> {
   /// Load all conversations for a user
   Future<void> loadConversations(String userId) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
-    
+
     try {
       final conversations = await _getConversationsUseCase(userId);
       final hasUnread = conversations.any((conv) => conv.hasUnreadMessages);
-      
+
       state = state.copyWith(
         conversations: conversations,
-        isLoading: false,
         hasUnreadMessages: hasUnread,
       );
-      
+
       // Listen for conversation updates
       _conversationSubscription?.cancel();
       _conversationSubscription = _chatRepository
@@ -115,19 +127,21 @@ class ChatNotifier extends Notifier<ChatState> {
           .listen((updatedConversation) {
         _updateConversationInList(updatedConversation);
       });
+      _startConversationPolling(userId);
     } catch (e) {
       state = state.copyWith(
-        isLoading: false,
         errorMessage: e.toString(),
         conversations: [], // Ensure conversations is empty on error
       );
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
   }
 
   /// Load messages for a specific conversation
   Future<void> loadMessages(String conversationId, String userId) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
-    
+
     try {
       final messages = await _getMessagesUseCase(conversationId);
       final conversation = state.conversations.firstWhere(
@@ -144,19 +158,21 @@ class ChatNotifier extends Notifier<ChatState> {
           updatedAt: DateTime.now(),
         ),
       );
-      
+
       state = state.copyWith(
         currentMessages: messages,
         currentConversation: conversation,
-        isLoading: false,
       );
-      
+
       // Mark messages as read
-      await _markMessagesReadUseCase(
-        conversationId: conversationId,
-        userId: userId,
-      );
-      
+      try {
+        await _markMessagesReadUseCase(
+          conversationId: conversationId,
+          userId: userId,
+        ).timeout(const Duration(seconds: 5));
+      } catch (_) {
+      }
+
       // Listen for new messages
       _messageSubscription?.cancel();
       _messageSubscription = _chatRepository
@@ -164,7 +180,8 @@ class ChatNotifier extends Notifier<ChatState> {
           .listen((newMessage) {
         _addMessageToCurrent(newMessage);
       });
-      
+      _startMessagePolling(conversationId);
+
       // Listen for typing indicators
       _typingSubscription?.cancel();
       _typingSubscription = _chatRepository
@@ -174,9 +191,61 @@ class ChatNotifier extends Notifier<ChatState> {
       });
     } catch (e) {
       state = state.copyWith(
-        isLoading: false,
         errorMessage: e.toString(),
       );
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  void _startConversationPolling(String userId) {
+    if (!kIsWeb || !ApiConstants.useProduction) return;
+
+    _conversationPollTimer?.cancel();
+    _conversationPollTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      _pollConversations(userId);
+    });
+  }
+
+  Future<void> _pollConversations(String userId) async {
+    if (_isPollingConversations) return;
+    _isPollingConversations = true;
+
+    try {
+      final conversations = await _getConversationsUseCase(userId);
+      final hasUnread = conversations.any((conv) => conv.hasUnreadMessages);
+      state = state.copyWith(
+        conversations: conversations,
+        hasUnreadMessages: hasUnread,
+      );
+    } catch (_) {
+    } finally {
+      _isPollingConversations = false;
+    }
+  }
+
+  void _startMessagePolling(String conversationId) {
+    if (!kIsWeb || !ApiConstants.useProduction) return;
+
+    _activeConversationId = conversationId;
+    _messagePollTimer?.cancel();
+    _messagePollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      _pollMessages(conversationId);
+    });
+  }
+
+  Future<void> _pollMessages(String conversationId) async {
+    if (_isPollingMessages || _activeConversationId != conversationId) return;
+    _isPollingMessages = true;
+
+    try {
+      final messages = await _getMessagesUseCase(conversationId);
+      if (_activeConversationId == conversationId) {
+        state = state.copyWith(currentMessages: messages);
+      }
+    } catch (_) {
+    } finally {
+      _isPollingMessages = false;
     }
   }
 
@@ -221,6 +290,31 @@ class ChatNotifier extends Notifier<ChatState> {
         isSending: false,
         errorMessage: e.toString(),
       );
+    }
+  }
+
+  Future<bool> deleteConversation(String conversationId, String userId) async {
+    if (state.isDeleting) return false;
+
+    state = state.copyWith(isDeleting: true, errorMessage: null);
+    try {
+      await _chatRepository.deleteConversation(conversationId, userId);
+      _messageSubscription?.cancel();
+      _typingSubscription?.cancel();
+      _messagePollTimer?.cancel();
+      _activeConversationId = null;
+
+      state = state.copyWith(
+        conversations:
+            state.conversations.where((conversation) => conversation.id != conversationId).toList(),
+        currentMessages: [],
+        currentConversation: null,
+        isDeleting: false,
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(isDeleting: false, errorMessage: e.toString());
+      return false;
     }
   }
 
@@ -325,6 +419,8 @@ class ChatNotifier extends Notifier<ChatState> {
   void clearCurrentConversation() {
     _messageSubscription?.cancel();
     _typingSubscription?.cancel();
+    _messagePollTimer?.cancel();
+    _activeConversationId = null;
     state = state.copyWith(
       currentMessages: [],
       currentConversation: null,
@@ -356,6 +452,15 @@ class ChatNotifier extends Notifier<ChatState> {
 
   /// Update conversation in the list
   void _updateConversationInList(ChatConversationEntity updatedConversation) {
+    if (!updatedConversation.isActive) {
+      state = state.copyWith(
+        conversations: state.conversations
+            .where((conversation) => conversation.id != updatedConversation.id)
+            .toList(),
+      );
+      return;
+    }
+
     final updatedConversations = state.conversations.map((conv) {
       return conv.id == updatedConversation.id ? updatedConversation : conv;
     }).toList();

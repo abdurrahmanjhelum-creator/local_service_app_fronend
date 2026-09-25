@@ -126,13 +126,20 @@ class ChatRemoteDataSource {
   /// Get conversations via HTTP API
   Future<List<ChatConversationModel>> getConversations(String userId) async {
     final token = await TokenManager.getToken();
-    final response = await _httpClient.get(
-      Uri.parse('${ApiConstants.baseUrl}/chat/conversations/$userId'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+    final response = await _httpClient
+        .get(
+          Uri.parse('${ApiConstants.baseUrl}/chat/conversations/$userId'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(
+          const Duration(seconds: 15),
+          onTimeout: () {
+            throw TimeoutException('Conversation request timed out', const Duration(seconds: 15));
+          },
+        );
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
@@ -145,13 +152,20 @@ class ChatRemoteDataSource {
   /// Get messages via HTTP API
   Future<List<ChatMessageModel>> getMessages(String conversationId) async {
     final token = await TokenManager.getToken();
-    final response = await _httpClient.get(
-      Uri.parse('${ApiConstants.baseUrl}/chat/messages/$conversationId'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+    final response = await _httpClient
+        .get(
+          Uri.parse('${ApiConstants.baseUrl}/chat/messages/$conversationId'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(
+          const Duration(seconds: 15),
+          onTimeout: () {
+            throw TimeoutException('Messages request timed out', const Duration(seconds: 15));
+          },
+        );
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
@@ -230,17 +244,45 @@ class ChatRemoteDataSource {
   /// Mark messages as read via HTTP API
   Future<void> markMessagesAsRead(String conversationId, String userId) async {
     final token = await TokenManager.getToken();
-    final response = await _httpClient.put(
-      Uri.parse('${ApiConstants.baseUrl}/chat/messages/$conversationId/read'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode({'userId': userId}),
-    );
+    final response = await _httpClient
+        .put(
+          Uri.parse('${ApiConstants.baseUrl}/chat/messages/$conversationId/read'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: json.encode({'userId': userId}),
+        )
+        .timeout(const Duration(seconds: 5));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to mark messages as read: ${response.statusCode}');
+    }
+  }
+
+  Future<void> deleteConversation(String conversationId, String userId) async {
+    final token = await TokenManager.getToken();
+    final response = await _httpClient
+        .delete(
+          Uri.parse('${ApiConstants.baseUrl}/chat/conversations/$conversationId'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: json.encode({'userId': userId}),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    if (response.statusCode != 200) {
+      String message = 'Failed to delete conversation (${response.statusCode})';
+      try {
+        final data = json.decode(response.body);
+        if (data is Map && data['message'] is String) {
+          message = data['message'] as String;
+        }
+      } catch (_) {
+      }
+      throw Exception(message);
     }
   }
 

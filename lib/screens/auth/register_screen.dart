@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/category_provider.dart';
 import '../../providers/ui_state_provider.dart';
 import '../../utils/app_colors.dart';
+import '../../utils/helpers.dart';
 import '../../widgets/category_dropdown.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
@@ -110,7 +111,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final category = ref.watch(registerCategoryProvider('register'));
     final image = ref.watch(registerImageProvider('register'));
     final categoryState = ref.watch(categoryProvider);
-    final categories = categoryState.categories.map((item) => item.name).toList();
+    final categories = categoryState.categories.isEmpty
+        ? defaultCategories
+        : categoryState.categories.map((item) => item.name).toList();
 
     return Scaffold(
       body: Container(

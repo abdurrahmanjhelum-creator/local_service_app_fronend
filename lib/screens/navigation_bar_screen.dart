@@ -31,7 +31,9 @@ class _NavigationBarScreenState extends ConsumerState<NavigationBarScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
       ref.read(notificationProvider.notifier).loadNotifications();
       // Initialize Clean Architecture Real-Time Socket Event & Notification Controller
       ref.read(socketEventProvider);

@@ -19,7 +19,11 @@ class CategoryDropdown extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: DropdownButtonFormField<String>(
-        initialValue: selected,
+        // Keep the value controlled so the selected provider category stays in sync.
+        // ignore: deprecated_member_use
+        value: selected,
+        isExpanded: true,
+        hint: const Text('Select a category'),
         items: items
             .map((name) => DropdownMenuItem(value: name, child: Text(name)))
             .toList(),

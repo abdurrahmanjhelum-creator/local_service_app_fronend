@@ -30,7 +30,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void initState() {
     super.initState();
     if (widget.conversation != null) {
-      _loadMessages();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _loadMessages();
+        }
+      });
     }
   }
 
@@ -355,28 +359,57 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context, ChatConversationEntity conversation) {
-    showDialog(
+  Future<void> _showDeleteConfirmation(
+    BuildContext context,
+    ChatConversationEntity conversation,
+  ) async {
+    final user = ref.read(authProvider).user;
+    if (user == null) return;
+
+    final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Conversation'),
-        content: const Text('Are you sure you want to delete this conversation?'),
+        content: const Text(
+          'This will remove the conversation for both participants. This action cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ref.read(chatProvider.notifier).clearCurrentConversation();
-              Navigator.pop(context);
-            },
+            onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: const Text('Delete'),
           ),
         ],
       ),
     );
+
+    if (shouldDelete != true || !context.mounted) return;
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      ),
+    );
+
+    final deleted = await ref.read(chatProvider.notifier).deleteConversation(
+          conversation.id,
+          user.id,
+        );
+    if (!context.mounted) return;
+
+    Navigator.of(context, rootNavigator: true).pop();
+
+    if (deleted) {
+      Navigator.pop(context);
+    } else {
+      final error = ref.read(chatProvider).errorMessage ?? 'Unable to delete conversation';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+    }
   }
 }

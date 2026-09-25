@@ -66,6 +66,11 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   @override
+  Future<void> deleteConversation(String conversationId, String userId) async {
+    await _remoteDataSource.deleteConversation(conversationId, userId);
+  }
+
+  @override
   Future<ChatConversationEntity> getOrCreateConversation({
     required String customerId,
     required String customerName,

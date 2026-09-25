@@ -10,23 +10,40 @@ import '../../utils/helpers.dart';
 import '../../widgets/info_row.dart';
 import '../../widgets/review_dialog.dart';
 
-class BookingDetailsScreen extends ConsumerWidget {
+class BookingDetailsScreen extends ConsumerStatefulWidget {
   const BookingDetailsScreen({super.key});
+
+  @override
+  ConsumerState<BookingDetailsScreen> createState() => _BookingDetailsScreenState();
+}
+
+class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen> {
+  bool _isUpdatingStatus = false; // Prevent multiple status update clicks
 
   // Dynamic Status updater API with custom OTP payload for completion clearances
   Future<void> _changeStatus(
-    BuildContext context,
-    WidgetRef ref,
     String bookingId,
     String status, {
     String? otpCode,
   }) async {
+    if (_isUpdatingStatus) return; // Prevent multiple clicks
+
+    setState(() {
+      _isUpdatingStatus = true;
+    });
+
     final ok = await ref.read(bookingProvider.notifier).updateBookingStatus(
           bookingId: bookingId,
           status: status,
           otp: otpCode, // Pass custom OTP to riverpod notifier
         );
-    if (!context.mounted) return;
+
+    if (!mounted) return;
+
+    setState(() {
+      _isUpdatingStatus = false;
+    });
+
     final error = ref.read(bookingProvider).errorMessage;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(ok ? 'Status successfully updated' : (error ?? 'Update failed'))),
@@ -35,7 +52,7 @@ class BookingDetailsScreen extends ConsumerWidget {
 
   // 🔥 PROVIDER COMPLETION INPUT DIALOG BOX
   // Provider must enter customer 4-digit code to complete the job
-  Future<void> _showOtpDialog(BuildContext context, WidgetRef ref, String bookingId) async {
+  Future<void> _showOtpDialog(String bookingId) async {
     final codeController = TextEditingController();
     
     await showDialog(
@@ -84,7 +101,7 @@ class BookingDetailsScreen extends ConsumerWidget {
                 Navigator.pop(context);
                 
                 // Submit update sequence trigger directly
-                _changeStatus(context, ref, bookingId, 'completed', otpCode: digits);
+                _changeStatus(bookingId, 'completed', otpCode: digits);
               },
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
               child: const Text('Verify & Finish', style: TextStyle(color: Colors.white)),
@@ -95,7 +112,7 @@ class BookingDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _addReview(BuildContext context, WidgetRef ref, String providerId, String bookingId) async {
+  Future<void> _addReview(String providerId, String bookingId) async {
     ref.read(reviewRatingProvider(providerId).notifier).state = 5;
 
     await showDialog<bool>(
@@ -121,13 +138,14 @@ class BookingDetailsScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     // Keep socket event controller alive for real-time updates
     ref.watch(socketEventProvider);
     
     final booking = ref.watch(bookingProvider).currentBooking;
     final loading = ref.watch(bookingProvider).isLoading;
     final isProvider = ref.watch(authProvider).user?.isProvider == true;
+    final isUpdating = loading || _isUpdatingStatus; // Combined loading state
 
     if (booking == null) {
       return Scaffold(
@@ -358,16 +376,16 @@ class BookingDetailsScreen extends ConsumerWidget {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: loading
+                        onPressed: isUpdating
                             ? null
-                            : () => _changeStatus(context, ref, booking.id, 'accepted'),
+                            : () => _changeStatus(booking.id, 'accepted'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           elevation: 2,
                         ),
-                        child: loading
+                        child: isUpdating
                             ? const SizedBox(
                                 width: 22,
                                 height: 22,
@@ -381,15 +399,15 @@ class BookingDetailsScreen extends ConsumerWidget {
                       width: double.infinity,
                       height: 50,
                       child: OutlinedButton(
-                        onPressed: loading
+                        onPressed: isUpdating
                             ? null
-                            : () => _changeStatus(context, ref, booking.id, 'rejected'),
+                            : () => _changeStatus(booking.id, 'rejected'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.red,
                           side: BorderSide(color: Colors.red[700]!),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: loading
+                        child: isUpdating
                             ? SizedBox(
                                 width: 22,
                                 height: 22,
@@ -406,16 +424,16 @@ class BookingDetailsScreen extends ConsumerWidget {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: loading
+                        onPressed: isUpdating
                             ? null
-                            : () => _showOtpDialog(context, ref, booking.id),
+                            : () => _showOtpDialog(booking.id),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue[700],
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           elevation: 2,
                         ),
-                        child: loading
+                        child: isUpdating
                             ? const SizedBox(
                                 width: 22,
                                 height: 22,
@@ -431,15 +449,15 @@ class BookingDetailsScreen extends ConsumerWidget {
                       width: double.infinity,
                       height: 50,
                       child: OutlinedButton(
-                        onPressed: loading
+                        onPressed: isUpdating
                             ? null
-                            : () => _changeStatus(context, ref, booking.id, 'cancelled'),
+                            : () => _changeStatus(booking.id, 'cancelled'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.orange[700],
                           side: BorderSide(color: Colors.orange[700]!),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: loading
+                        child: isUpdating
                             ? SizedBox(
                                 width: 22,
                                 height: 22,
@@ -453,7 +471,7 @@ class BookingDetailsScreen extends ConsumerWidget {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: () => _addReview(context, ref, booking.providerId, booking.id),
+                        onPressed: () => _addReview(booking.providerId, booking.id),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.amber[700],
                           foregroundColor: Colors.white,

@@ -29,6 +29,8 @@ abstract class ChatRepository {
   /// Mark messages as read
   Future<void> markMessagesAsRead(String conversationId, String userId);
 
+  Future<void> deleteConversation(String conversationId, String userId);
+
   /// Get or create conversation between two users
   Future<ChatConversationEntity> getOrCreateConversation({
     required String customerId,

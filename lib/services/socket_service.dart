@@ -292,7 +292,6 @@ class SocketService {
     required bool isTyping,
   }) {
     if (_socket == null || !_socket!.connected) {
-      debugPrint('⚠️ Socket not connected, cannot send typing indicator');
       return;
     }
     

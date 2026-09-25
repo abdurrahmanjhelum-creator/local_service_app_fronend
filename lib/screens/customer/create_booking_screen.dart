@@ -19,6 +19,8 @@ class CreateBookingScreen extends ConsumerStatefulWidget {
 class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
   final _formKey = GlobalKey<FormState>();
   final _addressController = TextEditingController();
+  bool _isSubmitting = false; // Prevent multiple clicks
+  
   @override
   void dispose() {
     _addressController.dispose();
@@ -45,9 +47,24 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
         DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
 
-  Future<void> _submit() async {
+  void _submit() {
+    if (_isSubmitting) return; // Prevent multiple clicks
     if (!_formKey.currentState!.validate()) return;
 
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    _submitAsync().then((_) {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    });
+  }
+
+  Future<void> _submitAsync() async {
     final success = await ref.read(bookingProvider.notifier).createBooking(
           provider: widget.provider.id,
           categoryName: widget.provider.category.isEmpty
@@ -357,8 +374,8 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
               const SizedBox(height: 24),
                     CustomButton(
                       text: 'Confirm booking',
-                      isLoading: loading,
-                      onPressed: _submit,
+                      isLoading: loading || _isSubmitting, // Respect both loading states
+                      onPressed: _submit, // Direct function reference
                     ),
                   ],
                 ),
