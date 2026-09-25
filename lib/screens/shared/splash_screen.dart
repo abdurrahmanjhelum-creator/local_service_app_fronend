@@ -22,7 +22,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
   void initState() {
     super.initState();
 
-    // Premium Micro-Animations Initialize karein
+    // Initialize micro-animations
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -38,7 +38,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
 
     _animationController.forward();
 
-    // Authentication checking aur navigation handle karne ke liye delay
+    // Handle authentication check and navigation delay
     _navigateToNextScreen();
   }
 
@@ -49,8 +49,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
   }
 
   Future<void> _navigateToNextScreen() async {
-    // 3 Seconds ka professional wait time taake user branding dekh sake
-      await Future.delayed(const Duration(seconds: 4));
+    // Wait for branding animation display
+    await Future.delayed(const Duration(seconds: 4));
     
     if (!mounted) return;
 
@@ -63,7 +63,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
       nextScreen = const RoleSelectionScreen();
     }
 
-    // Professional Fade Page Transition ke sath agli screen par jayein
+    // Smooth page transition
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => nextScreen,

@@ -15,11 +15,10 @@ void main() async {
   try {
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   } catch (e) {
-    // Firebase background message handler setup may fail on web or without proper config
     debugPrint('⚠️ Firebase background handler setup skipped: $e');
   }
 
-  // System Notifications and Sound channel initialize karein
+  // Initialize System Notifications and Sound channel
   await FcmService().init();
 
   runApp(const ProviderScope(child: LocalServicesApp()));
@@ -35,30 +34,30 @@ class LocalServicesApp extends ConsumerWidget {
     
     final socketService = SocketService();
 
-    // Socket connection manage karo - user login/logout ke basis par
+    // Manage socket connection based on user authentication state
     ref.listen(authProvider, (previous, next) async {
-      // Jab user login ho jaye
+      // When user logs in
       if (previous?.user == null && next.user != null) {
         debugPrint('🟢 User logged in, connecting socket...');
 
         try {
-          // Pehle socket connect karo (wait for connection)
+          // Connect socket
           await socketService.connect();
 
-          // Phir user ki private room join karo taake usko specific events milein
+          // Join user private room to receive real-time events
           socketService.joinRoom(next.user!.id);
         } catch (e) {
           debugPrint('⚠️ Socket connection failed: $e');
-          debugPrint('⚠️ Make sure backend server is running on port 5000');
+          debugPrint('⚠️ Ensure backend server is running on port 5000');
         }
 
-        // Save FCM token on this logged-in user so later pushes can ring
+        // Sync FCM token for push notifications
         await FcmService().syncCurrentToken();
       }
-      // Jab user logout ho jaye
+      // When user logs out
       else if (previous?.user != null && next.user == null) {
         debugPrint('🔴 User logged out, disconnecting socket...');
-        socketService.disconnect(); // Socket connection disconnect karo
+        socketService.disconnect();
       }
     });
 

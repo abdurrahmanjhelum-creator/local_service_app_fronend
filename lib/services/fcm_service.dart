@@ -279,7 +279,7 @@ class FcmService {
         iOS: iosDetails,
       );
 
-      // Mobile System Tray Par Notification Pop Up Karein
+      // Display notification in system tray
       final id = DateTime.now().millisecondsSinceEpoch ~/ 1000;
       await _localNotifications.show(
         id,

@@ -16,7 +16,7 @@ final otpVerifyErrorProvider = StateProvider.autoDispose<String?>((ref) => null)
 
 class OtpVerifyScreen extends ConsumerWidget {
   final String email;
-  final String selectedRole; // 🔥 Role from previous screens
+  final String selectedRole;
 
   const OtpVerifyScreen({
     super.key,
@@ -30,7 +30,6 @@ class OtpVerifyScreen extends ConsumerWidget {
     final otpController = TextEditingController();
     final apiService = ApiService();
 
-    // Riverpod local states watch karein
     final isLoading = ref.watch(otpVerifyLoadingProvider);
     final errorMessage = ref.watch(otpVerifyErrorProvider);
 
@@ -45,7 +44,6 @@ class OtpVerifyScreen extends ConsumerWidget {
       ref.read(otpVerifyErrorProvider.notifier).state = null;
 
       try {
-        // Backend API /auth/verify-otp par background me email aur user ka lakha hua OTP send karein
         await apiService.post('${ApiConstants.baseUrl}/auth/verify-otp', {
           'email': email,
           'otp': code,
@@ -57,13 +55,12 @@ class OtpVerifyScreen extends ConsumerWidget {
           const SnackBar(content: Text('Email verified successfully!')),
         );
 
-        // Successfully verify hone par RegisterScreen par pushReplacement
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => RegisterScreen(
               verifiedEmail: email,
-              selectedRole: selectedRole, // 🔥 Passing selected role to register screen
+              selectedRole: selectedRole,
             ),
           ),
         );

@@ -34,7 +34,7 @@ class BookingDetailsScreen extends ConsumerWidget {
   }
 
   // 🔥 PROVIDER COMPLETION INPUT DIALOG BOX
-  // Jab tak provider customer ka 4-digit token daal kar verify nahi karega, job complete nahi hogi
+  // Provider must enter customer 4-digit code to complete the job
   Future<void> _showOtpDialog(BuildContext context, WidgetRef ref, String bookingId) async {
     final codeController = TextEditingController();
     

@@ -94,7 +94,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Account created successfully!')),
       );
-      // 🔥 Success hone par direct NavigationBarScreen par jayein aur stack clear karein
+      // On success, navigate directly to NavigationBarScreen and clear stack
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const NavigationBarScreen()),

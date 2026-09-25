@@ -10,12 +10,12 @@ import '../../widgets/custom_text_field.dart';
 import 'otp_verify_screen.dart';
 import 'role_selection_screen.dart';
 
-// Riverpod local state providers for this screen loading and error management
+// Riverpod local state providers for email verification loading and error management
 final emailVerifyLoadingProvider = StateProvider.autoDispose<bool>((ref) => false);
 final emailVerifyErrorProvider = StateProvider.autoDispose<String?>((ref) => null);
 
 class EmailVerifyScreen extends ConsumerWidget {
-  final String selectedRole; // 🔥 Pre-selected role from previous screen
+  final String selectedRole;
 
   const EmailVerifyScreen({super.key, required this.selectedRole});
 
@@ -25,21 +25,18 @@ class EmailVerifyScreen extends ConsumerWidget {
     final emailController = TextEditingController();
     final apiService = ApiService();
     
-    // Riverpod states watch karein
     final isLoading = ref.watch(emailVerifyLoadingProvider);
     final errorMessage = ref.watch(emailVerifyErrorProvider);
 
     Future<void> sendOtp() async {
       if (!formKey.currentState!.validate()) return;
 
-      // Loading start karein aur purana error clear karein
       ref.read(emailVerifyLoadingProvider.notifier).state = true;
       ref.read(emailVerifyErrorProvider.notifier).state = null;
 
       final emailStr = emailController.text.trim();
 
       try {
-        // Backend API ko call karein
         await apiService.post('${ApiConstants.baseUrl}/auth/send-otp', {
           'email': emailStr,
         });
@@ -50,13 +47,12 @@ class EmailVerifyScreen extends ConsumerWidget {
           const SnackBar(content: Text('Verification OTP sent successfully to your email.')),
         );
 
-        // Next screen par jayein aur email + role pass karein
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => OtpVerifyScreen(
               email: emailStr,
-              selectedRole: selectedRole, // 🔥 Passing role forward
+              selectedRole: selectedRole,
             ),
           ),
         );
@@ -107,7 +103,7 @@ class EmailVerifyScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Signing up as ${selectedRole[0].toUpperCase()}${selectedRole.substring(1)}. Please enter your email to receive verification code.',
+                    'Signing up as ${selectedRole[0].toUpperCase()}${selectedRole.substring(1)}. Please enter your email to receive a verification code.',
                     style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
                   ),
                   const SizedBox(height: 32),
