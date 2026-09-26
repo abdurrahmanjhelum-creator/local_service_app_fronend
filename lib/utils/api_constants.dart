@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 
 class ApiConstants {
   // 🚀 LIVE PRODUCTION VERCEL SERVER URL
-  static const bool useProduction = true;
+  static const bool useProduction = false;
   static const String liveProductionUrl = 'https://local-service-app-backend-three.vercel.app';
 
   // 📱 LOCAL DEV IP (When testing locally with backend on same WiFi)

@@ -8,6 +8,7 @@ import '../../widgets/category_icon.dart';
 import '../../widgets/micro_interactions.dart';
 import '../../widgets/promo_slider.dart';
 import 'categories_screen.dart';
+import 'map_screen.dart';
 
 class CustomerHomeScreen extends ConsumerWidget {
   final void Function(int index, {String? category})? onOpenTab;
@@ -279,18 +280,41 @@ class CustomerHomeScreen extends ConsumerWidget {
             MicroInteractions.staggeredList(
               index: 3,
               child: _HomeCard(
-                icon: Icons.manage_accounts_rounded,
-                title: 'Profile Settings',
-                subtitle: 'Manage account',
+                icon: Icons.map_rounded,
+                title: 'Nearby Map',
+                subtitle: 'Find nearby experts',
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
+                  colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                    ),
-                onTap: () => onOpenTab?.call(3),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MapScreen()),
+                  );
+                },
               ),
             ),
           ],
+        ),
+        
+        const SizedBox(height: 12),
+        
+        // Profile settings card (full width)
+        MicroInteractions.staggeredList(
+          index: 4,
+          child: _HomeCard(
+            icon: Icons.manage_accounts_rounded,
+            title: 'Profile Settings',
+            subtitle: 'Manage account',
+            gradient: const LinearGradient(
+              colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            onTap: () => onOpenTab?.call(3),
+          ),
         ),
       ],
       ),

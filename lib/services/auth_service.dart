@@ -16,17 +16,23 @@ class AuthService {
     String? category,
     double? priceStarting,
     int? experienceYears,
+    String? address,
+    double? latitude,
+    double? longitude,
   }) async {
-    final fields = {
+    final fields = <String, String>{
       'name': name,
       'email': email,
       'password': password,
       'phone': phone,
       'role': role,
       'category': category ?? '',
-      if (priceStarting != null) 'priceStarting': '$priceStarting',
-      if (experienceYears != null) 'experienceYears': '$experienceYears',
     };
+    if (priceStarting != null) fields['priceStarting'] = priceStarting.toString();
+    if (experienceYears != null) fields['experienceYears'] = experienceYears.toString();
+    if (address != null) fields['address'] = address;
+    if (latitude != null) fields['latitude'] = latitude.toString();
+    if (longitude != null) fields['longitude'] = longitude.toString();
 
     final response = await _api.sendForm(
       url: ApiConstants.register,

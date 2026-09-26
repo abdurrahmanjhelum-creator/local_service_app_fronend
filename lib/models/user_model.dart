@@ -11,6 +11,11 @@ class UserModel {
   final bool isAvailable;
   final double rating;
   final String? token;
+  
+  // Geolocation fields for map features
+  final double? latitude;
+  final double? longitude;
+  final String? address;
 
   UserModel({
     required this.id,
@@ -25,6 +30,9 @@ class UserModel {
     this.isAvailable = true,
     this.rating = 5,
     this.token,
+    this.latitude,
+    this.longitude,
+    this.address,
   });
 
   bool get isProvider => role == 'provider';
@@ -43,6 +51,9 @@ class UserModel {
       isAvailable: json['isAvailable'] ?? true,
       rating: (json['rating'] as num?)?.toDouble() ?? 5,
       token: json['token'],
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      address: json['address'],
     );
   }
 }

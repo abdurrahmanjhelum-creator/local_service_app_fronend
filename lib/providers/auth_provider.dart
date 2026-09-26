@@ -76,6 +76,9 @@ class AuthNotifier extends Notifier<AuthState> {
     String? category,
     double? priceStarting,
     int? experienceYears,
+    String? address,
+    double? latitude,
+    double? longitude,
   }) async {
     state = AuthState(isLoading: true);
     try {
@@ -89,6 +92,9 @@ class AuthNotifier extends Notifier<AuthState> {
         category: category,
         priceStarting: priceStarting,
         experienceYears: experienceYears,
+        address: address,
+        latitude: latitude,
+        longitude: longitude,
       );
       state = AuthState(user: user);
       _connectSocket(user);
