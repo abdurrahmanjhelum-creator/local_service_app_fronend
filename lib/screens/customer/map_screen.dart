@@ -6,6 +6,7 @@ import '../../models/user_model.dart';
 import '../../providers/service_provider.dart';
 import '../../services/location_service.dart';
 import '../../utils/app_colors.dart';
+import 'provider_details_screen.dart';
 
 /// Professional Map Screen for Location-based Provider Search
 /// Shows nearby providers on an interactive map with distance calculation
@@ -425,81 +426,91 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   Widget _buildProviderCard(UserModel provider, double distance) {
-    return Container(
-      width: 160,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                ClipOval(
-                  child: provider.profileImage.isNotEmpty
-                      ? Image.network(
-                          provider.profileImage,
-                          width: 40,
-                          height: 40,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(Icons.person, size: 20);
-                          },
-                        )
-                      : const Icon(Icons.person, size: 20),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        provider.name,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProviderDetailsScreen(providerId: provider.id),
+          ),
+        );
+      },
+      child: Container(
+        width: 160,
+        margin: const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  ClipOval(
+                    child: provider.profileImage.isNotEmpty
+                        ? Image.network(
+                            provider.profileImage,
+                            width: 40,
+                            height: 40,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(Icons.person, size: 20);
+                            },
+                          )
+                        : const Icon(Icons.person, size: 20),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          provider.name,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        provider.category,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey[600],
+                        Text(
+                          provider.category,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey[600],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.location_on, size: 14, color: AppColors.primary),
-                const SizedBox(width: 4),
-                Text(
-                  _locationService.getFormattedDistance(
-                    _currentLocation!,
-                    LatLng(provider.latitude!, provider.longitude!),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.location_on, size: 14, color: AppColors.primary),
+                  const SizedBox(width: 4),
+                  Text(
+                    _locationService.getFormattedDistance(
+                      _currentLocation!,
+                      LatLng(provider.latitude!, provider.longitude!),
+                    ),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -600,7 +611,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  // Navigate to provider details or booking
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ProviderDetailsScreen(providerId: provider.id),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -698,85 +714,95 @@ class _ProviderListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProviderDetailsScreen(providerId: provider.id),
           ),
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: ClipOval(
-          child: provider.profileImage.isNotEmpty
-              ? Image.network(
-                  provider.profileImage,
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Icon(Icons.person, size: 25);
-                  },
-                )
-              : const Icon(Icons.person, size: 25),
-        ),
-        title: Text(
-          provider.name,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(provider.category),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.location_on, size: 16, color: AppColors.primary),
-                const SizedBox(width: 4),
-                Text(
-                  locationService.getFormattedDistance(
-                    currentLocation,
-                    LatLng(provider.latitude!, provider.longitude!),
-                  ),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
-        trailing: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.star, size: 16, color: Colors.amber),
-                const SizedBox(width: 4),
-                Text(
-                  provider.rating.toStringAsFixed(1),
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Rs ${provider.priceStarting.toStringAsFixed(0)}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
+        child: ListTile(
+          contentPadding: const EdgeInsets.all(16),
+          leading: ClipOval(
+            child: provider.profileImage.isNotEmpty
+                ? Image.network(
+                    provider.profileImage,
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.person, size: 25);
+                    },
+                  )
+                : const Icon(Icons.person, size: 25),
+          ),
+          title: Text(
+            provider.name,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(provider.category),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Icon(Icons.location_on, size: 16, color: AppColors.primary),
+                  const SizedBox(width: 4),
+                  Text(
+                    locationService.getFormattedDistance(
+                      currentLocation,
+                      LatLng(provider.latitude!, provider.longitude!),
+                    ),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+            ],
+          ),
+          trailing: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.star, size: 16, color: Colors.amber),
+                  const SizedBox(width: 4),
+                  Text(
+                    provider.rating.toStringAsFixed(1),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Rs ${provider.priceStarting.toStringAsFixed(0)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
