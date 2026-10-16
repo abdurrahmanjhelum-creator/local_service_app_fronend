@@ -36,14 +36,17 @@ class NotificationNotifier extends Notifier<NotificationState> {
   @override
   NotificationState build() => NotificationState();
 
-  Future<void> loadNotifications() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+  Future<void> loadNotifications({bool silent = false}) async {
+    if (!silent) {
+      state = state.copyWith(isLoading: true, errorMessage: null);
+    }
     try {
       final res = await _api.getNotifications();
       state = state.copyWith(
         notifications: res['notifications'] as List<NotificationModel>,
         unreadCount: res['unreadCount'] as int,
         isLoading: false,
+        errorMessage: null,
       );
     } catch (e) {
       state = state.copyWith(

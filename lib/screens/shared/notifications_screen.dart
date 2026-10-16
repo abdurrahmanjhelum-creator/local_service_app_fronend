@@ -157,19 +157,54 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  Icons.notifications_off_outlined,
+                                  state.errorMessage != null
+                                      ? Icons.error_outline
+                                      : Icons.notifications_off_outlined,
                                   size: 64,
                                   color: Colors.grey[400],
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
-                                  'No notifications yet',
+                                  state.errorMessage != null
+                                      ? 'Could not load notifications'
+                                      : 'No notifications yet',
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: Colors.grey[600],
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
+                                if (state.errorMessage != null) ...[
+                                  const SizedBox(height: 8),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                                    child: Text(
+                                      state.errorMessage!,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.red[400],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextButton.icon(
+                                    onPressed: () => ref
+                                        .read(notificationProvider.notifier)
+                                        .loadNotifications(),
+                                    icon: const Icon(Icons.refresh),
+                                    label: const Text('Retry'),
+                                  ),
+                                ] else ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Booking updates will appear here',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey[500],
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           )

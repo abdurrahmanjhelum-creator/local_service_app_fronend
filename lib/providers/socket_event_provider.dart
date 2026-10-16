@@ -6,27 +6,38 @@ import '../models/booking_model.dart';
 import '../models/notification_model.dart';
 import '../services/fcm_service.dart';
 import '../services/socket_service.dart';
+import '../utils/api_constants.dart';
 import 'booking_provider.dart';
 import 'notification_provider.dart';
 
 /// Clean Architecture Controller for Real-Time Socket Events & System Notifications
-/// 2-second polling for instant booking status updates when WebSocket unavailable
+/// On Vercel production, WebSockets are unavailable — poll HTTP instead.
 class SocketEventController {
   final Ref ref;
   final SocketService _socketService = SocketService();
   StreamSubscription? _bookingCreatedSub;
   StreamSubscription? _bookingStatusSub;
   StreamSubscription? _notificationSub;
-  
-
+  Timer? _notificationPollTimer;
+  Timer? _bookingPollTimer;
 
   SocketEventController(this.ref) {
     _initListeners();
-    // Polling disabled - relying on WebSocket only for better performance
-    // Uncomment below for production Vercel deployment if needed
-    // if (kIsWeb && ApiConstants.useProduction) {
-    //   _startBookingStatusPolling();
-    // }
+    if (ApiConstants.useProduction) {
+      _startProductionPolling();
+    }
+  }
+
+  void _startProductionPolling() {
+    // Notification panel: refresh every 8s so new booking alerts appear without sockets
+    _notificationPollTimer = Timer.periodic(const Duration(seconds: 8), (_) {
+      ref.read(notificationProvider.notifier).loadNotifications(silent: true);
+    });
+    // Bookings: refresh every 12s for status changes
+    _bookingPollTimer = Timer.periodic(const Duration(seconds: 12), (_) {
+      ref.read(bookingProvider.notifier).loadBookings();
+    });
+    debugPrint('ℹ️ Production mode: HTTP polling enabled for notifications & bookings');
   }
 
   void _initListeners() {
@@ -82,6 +93,8 @@ class SocketEventController {
     _bookingCreatedSub?.cancel();
     _bookingStatusSub?.cancel();
     _notificationSub?.cancel();
+    _notificationPollTimer?.cancel();
+    _bookingPollTimer?.cancel();
   }
 }
 
