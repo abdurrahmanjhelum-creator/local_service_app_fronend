@@ -102,6 +102,8 @@ class NotificationNotifier extends Notifier<NotificationState> {
             type: item.type,
             bookingId: item.bookingId,
             status: item.status,
+            conversationId: item.conversationId,
+            fromUserName: item.fromUserName,
             isRead: true,
             createdAt: item.createdAt,
           );
@@ -129,6 +131,8 @@ class NotificationNotifier extends Notifier<NotificationState> {
           type: item.type,
           bookingId: item.bookingId,
           status: item.status,
+          conversationId: item.conversationId,
+          fromUserName: item.fromUserName,
           isRead: true,
           createdAt: item.createdAt,
         );

@@ -396,7 +396,7 @@ class InvoiceService {
         'serviceName': booking.categoryName,
         'serviceCategory': booking.categoryName,
         'amount': booking.bookedPrice,
-        'currency': 'USD',
+        'currency': 'PKR',
         'status': booking.status == 'completed' ? 'paid' : 'pending',
         'bookingDate': booking.bookingDate,
         'address': booking.address,

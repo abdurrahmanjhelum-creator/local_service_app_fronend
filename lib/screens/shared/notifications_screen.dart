@@ -35,21 +35,6 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     }
   }
 
-  IconData _getNotificationIcon(String type) {
-    switch (type) {
-      case 'booking_created':
-        return Icons.event_available;
-      case 'booking_status':
-        return Icons.sync_alt;
-      case 'review_received':
-        return Icons.star;
-      case 'message':
-        return Icons.chat_bubble_outline;
-      default:
-        return Icons.notifications;
-    }
-  }
-
   Color _getNotificationColor(String type) {
     switch (type) {
       case 'booking_created':
@@ -249,23 +234,24 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                       horizontal: 16,
                                       vertical: 8,
                                     ),
-                                    leading: Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        color: iconColor.withValues(alpha: 0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        _getNotificationIcon(item.type),
-                                        color: iconColor,
-                                        size: 22,
+                                    leading: CircleAvatar(
+                                      backgroundColor:
+                                          iconColor.withValues(alpha: 0.15),
+                                      child: Text(
+                                        item.displayName.isNotEmpty
+                                            ? item.displayName[0].toUpperCase()
+                                            : '?',
+                                        style: TextStyle(
+                                          color: iconColor,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
                                     title: Row(
                                       children: [
                                         Expanded(
                                           child: Text(
-                                            item.title,
+                                            item.displayName,
                                             style: TextStyle(
                                               fontWeight: item.isRead
                                                   ? FontWeight.w600
@@ -279,19 +265,36 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                           _formatTimeAgo(item.createdAt),
                                           style: TextStyle(
                                             fontSize: 11,
-                                            color: Colors.grey[500],
+                                            color: AppColors.textSecondary,
                                           ),
                                         ),
                                       ],
                                     ),
                                     subtitle: Padding(
                                       padding: const EdgeInsets.only(top: 4),
-                                      child: Text(
-                                        item.body,
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.grey[700],
-                                        ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item.contextLabel,
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                              color: iconColor,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            item.body,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                     onTap: () => _onNotificationTap(item),

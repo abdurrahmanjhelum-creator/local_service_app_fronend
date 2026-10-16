@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/entities/chat_conversation_entity.dart';
 import '../domain/entities/chat_message_entity.dart';
@@ -199,7 +198,7 @@ class ChatNotifier extends Notifier<ChatState> {
   }
 
   void _startConversationPolling(String userId) {
-    if (!kIsWeb || !ApiConstants.useProduction) return;
+    if (!ApiConstants.useProduction) return;
 
     _conversationPollTimer?.cancel();
     _conversationPollTimer = Timer.periodic(const Duration(seconds: 2), (_) {
@@ -225,7 +224,7 @@ class ChatNotifier extends Notifier<ChatState> {
   }
 
   void _startMessagePolling(String conversationId) {
-    if (!kIsWeb || !ApiConstants.useProduction) return;
+    if (!ApiConstants.useProduction) return;
 
     _activeConversationId = conversationId;
     _messagePollTimer?.cancel();
