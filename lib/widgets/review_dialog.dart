@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/booking_model.dart';
 import '../providers/booking_provider.dart';
 import '../providers/ui_state_provider.dart';
-import '../screens/navigation_bar_screen.dart';
 import '../services/service_api.dart';
 import '../utils/helpers.dart';
 
@@ -61,16 +60,12 @@ class _ReviewDialogState extends ConsumerState<ReviewDialog> {
       await ref.read(bookingProvider.notifier).loadBookings();
 
       if (mounted) {
-        ref.read(selectedTabProvider('root').notifier).state = 0;
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const NavigationBarScreen(),
-          ),
-          (route) => false,
-        );
+        Navigator.of(context).pop(); // close dialog
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop(); // back to bookings list
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Review saved')),
+          const SnackBar(content: Text('Review saved. Thank you!')),
         );
       }
     } catch (e) {

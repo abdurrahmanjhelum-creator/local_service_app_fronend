@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../../screens/auth/role_selection_screen.dart';
+import '../../screens/shared/notifications_screen.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/info_row.dart';
@@ -236,6 +238,73 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                       ),
                     ],
+                    const SizedBox(height: 24),
+                    MicroInteractions.rippleEffect(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const NotificationsScreen(),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.notifications_outlined,
+                                color: AppColors.primary),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text(
+                                'Notification history',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                            if (ref.watch(notificationProvider).unreadCount > 0)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.error,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '${ref.watch(notificationProvider).unreadCount}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(width: 8),
+                            Icon(Icons.chevron_right,
+                                color: AppColors.textSecondary),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 32),
                     SizedBox(
                       width: double.infinity,
@@ -250,7 +319,7 @@ class ProfileScreen extends ConsumerWidget {
                             );
                           }
                         },
-                        backgroundColor: Colors.red[700],
+                        backgroundColor: AppColors.error,
                         child: const Text('Logout'),
                       ),
                     ),

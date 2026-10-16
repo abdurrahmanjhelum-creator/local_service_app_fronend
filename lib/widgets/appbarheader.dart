@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/notification_provider.dart';
-import '../screens/shared/notifications_screen.dart';
 import '../utils/app_colors.dart';
 
+/// App header — no extra notification bell.
+/// Alerts arrive automatically (system + in-app banner) like WhatsApp.
 class AppBarHeader extends ConsumerWidget implements PreferredSizeWidget {
   final String title;
   final List<Widget>? actions;
@@ -15,8 +15,6 @@ class AppBarHeader extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final unreadCount = ref.watch(notificationProvider).unreadCount;
-
     return AppBar(
       elevation: 0,
       toolbarHeight: preferredSize.height,
@@ -69,53 +67,7 @@ class AppBarHeader extends ConsumerWidget implements PreferredSizeWidget {
       ),
       actions: [
         if (actions != null) ...actions!,
-        // Notification Bell Icon with Unread Badge Counter
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            IconButton(
-              icon: const Icon(
-                Icons.notifications_outlined,
-                color: Colors.white,
-                size: 24,
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const NotificationsScreen(),
-                  ),
-                );
-              },
-            ),
-            if (unreadCount > 0)
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: AppColors.error,
-                    shape: BoxShape.circle,
-                  ),
-                  constraints: const BoxConstraints(
-                    minWidth: 18,
-                    minHeight: 18,
-                  ),
-                  child: Text(
-                    unreadCount > 99 ? '99+' : '$unreadCount',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 8),
       ],
     );
   }

@@ -30,15 +30,15 @@ class _PromoSliderState extends State<PromoSlider> {
 
   final List<PromoItem> _items = [
     PromoItem(
-      title: 'Get 20% OFF Your First Service',
-      subtitle: 'Use code LOCAL20 at checkout',
-      icon: Icons.local_offer_rounded,
+      title: 'Book Trusted Local Experts',
+      subtitle: 'Electricians, plumbers, cleaners & more',
+      icon: Icons.handyman_rounded,
       gradient: AppColors.primaryGradient,
     ),
     PromoItem(
-      title: 'Verified Professional Experts',
-      subtitle: 'Background checked & certified',
-      icon: Icons.verified_user_rounded,
+      title: 'Pay Cash After Service',
+      subtitle: 'No online payment required',
+      icon: Icons.payments_outlined,
       gradient: const LinearGradient(
         colors: [Color(0xFF10B981), Color(0xFF059669)],
         begin: Alignment.topLeft,
@@ -46,21 +46,21 @@ class _PromoSliderState extends State<PromoSlider> {
       ),
     ),
     PromoItem(
-      title: 'Expert Home Solutions',
-      subtitle: 'Energy efficient & smart lighting',
-      icon: Icons.lightbulb_rounded,
+      title: 'Track Bookings Live',
+      subtitle: 'Status updates & chat with your provider',
+      icon: Icons.notifications_active_outlined,
       gradient: const LinearGradient(
-        colors: [Color(0xFF34D399), Color(0xFF059669)], // Greenish gradient
+        colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
     ),
     PromoItem(
-      title: '24/7 Support Available',
-      subtitle: 'We are here to help you always',
+      title: 'Support When You Need It',
+      subtitle: 'Message your provider anytime in-app',
       icon: Icons.support_agent_rounded,
       gradient: const LinearGradient(
-        colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+        colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),

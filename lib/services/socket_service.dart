@@ -60,9 +60,9 @@ class SocketService {
 
   /// Connect to Socket.io server
   Future<void> connect() async {
-    // Vercel serverless platform does not host persistent WebSocket servers.
-    if (kIsWeb && ApiConstants.useProduction) {
-      debugPrint('ℹ️ Web environment on Vercel: WebSockets not supported by serverless. Using clean HTTP REST API.');
+    // Vercel serverless has no persistent WebSockets — all platforms use HTTP polling.
+    if (ApiConstants.useProduction) {
+      debugPrint('ℹ️ Production (Vercel): WebSockets disabled. Using HTTP polling.');
       _isConnected = false;
       _connectionStatusController.add(false);
       return;
