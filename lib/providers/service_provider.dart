@@ -17,10 +17,32 @@ class ServiceNotifier extends Notifier<ServiceState> {
     return ServiceState(isLoading: true);
   }
 
-  Future<void> load({String? category}) async {
+  Future<void> load({
+    String? category,
+    double? minPrice,
+    double? maxPrice,
+    double? minRating,
+    bool? isAvailable,
+    bool? isVerified,
+    String? sortBy,
+    double? distanceKm,
+    double? latitude,
+    double? longitude,
+  }) async {
     state = ServiceState(isLoading: true);
     try {
-      final list = await ServiceApi().getProviders(category: category);
+      final list = await ServiceApi().getProviders(
+        category: category,
+        minPrice: minPrice,
+        maxPrice: maxPrice,
+        minRating: minRating,
+        isAvailable: isAvailable,
+        isVerified: isVerified,
+        sortBy: sortBy,
+        distanceKm: distanceKm,
+        latitude: latitude,
+        longitude: longitude,
+      );
       state = ServiceState(isLoading: false, providers: list);
     } catch (e) {
       state = ServiceState(isLoading: false, error: e.toString());

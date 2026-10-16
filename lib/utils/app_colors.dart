@@ -19,6 +19,7 @@ class AppColors {
   static const Color secondary20 = Color(0x330D9488);
   static const Color secondaryDark = Color(0xFF115E59);
   static const Color secondaryLight = Color(0xFF2DD4BF);
+  static const Color accent = Color(0xFF6366F1); // Indigo Accent
 
   // ==================== NEUTRAL COLORS ====================
   static const Color white = Color(0xFFFFFFFF);

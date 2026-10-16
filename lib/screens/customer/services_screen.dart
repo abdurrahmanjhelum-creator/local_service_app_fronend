@@ -20,6 +20,23 @@ class ServicesScreen extends ConsumerStatefulWidget {
 
 class _ServicesScreenState extends ConsumerState<ServicesScreen> {
   final _searchController = TextEditingController();
+  
+  // Filter states
+  double? _minPrice;
+  double? _maxPrice;
+  double? _minRating;
+  double _distanceKm = 25;
+  bool _isAvailable = false;
+  bool _isVerified = false;
+  String _sortBy = 'rating_desc';
+  
+  bool get hasActiveFilters => 
+      _minPrice != null || 
+      _maxPrice != null || 
+      _minRating != null || 
+      _distanceKm < 25 ||
+      _isAvailable || 
+      _isVerified;
 
   @override
   void initState() {
@@ -43,7 +60,16 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
     // Update category state
     ref.read(servicesCategoryProvider(key).notifier).state = category;
     // Only refresh provider list, not full screen
-    await ref.read(serviceListProvider.notifier).load(category: category);
+    await ref.read(serviceListProvider.notifier).load(
+      category: category,
+      minPrice: _minPrice,
+      maxPrice: _maxPrice,
+      minRating: _minRating,
+      isAvailable: _isAvailable ? true : null,
+      isVerified: _isVerified ? true : null,
+      sortBy: _sortBy,
+      distanceKm: _distanceKm,
+    );
   }
 
   List<dynamic> _filtered(List<dynamic> providers, String query) {
@@ -52,6 +78,210 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
       return item.name.toLowerCase().contains(query) ||
           item.category.toLowerCase().contains(query);
     }).toList();
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _minPrice = null;
+      _maxPrice = null;
+      _minRating = null;
+      _distanceKm = 25;
+      _isAvailable = false;
+      _isVerified = false;
+      _sortBy = 'rating_desc';
+    });
+    _load(widget.providerKey, category: ref.read(servicesCategoryProvider(widget.providerKey)));
+  }
+
+  void _showFilterBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Advanced Filters',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      _clearFilters();
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Clear All'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              
+              // Price Range
+              const Text('Price Range', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Min Price',
+                        prefixText: '\$',
+                      ),
+                      keyboardType: TextInputType.number,
+                      onChanged: (value) {
+                        _minPrice = double.tryParse(value);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Max Price',
+                        prefixText: '\$',
+                      ),
+                      keyboardType: TextInputType.number,
+                      onChanged: (value) {
+                        _maxPrice = double.tryParse(value);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Rating
+              const Text('Minimum Rating', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Slider(
+                value: _minRating ?? 0,
+                min: 0,
+                max: 5,
+                divisions: 10,
+                label: (_minRating ?? 0).toStringAsFixed(1),
+                onChanged: (value) {
+                  setModalState(() {
+                    _minRating = value;
+                  });
+                },
+              ),
+              
+              const SizedBox(height: 16),
+
+              // Distance
+              const Text('Maximum Distance', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('0 km'),
+                  Text('${_distanceKm.toStringAsFixed(0)} km'),
+                  const Text('50 km'),
+                ],
+              ),
+              Slider(
+                value: _distanceKm,
+                min: 0,
+                max: 50,
+                divisions: 50,
+                label: '${_distanceKm.toStringAsFixed(0)} km',
+                onChanged: (value) {
+                  setModalState(() {
+                    _distanceKm = value;
+                  });
+                },
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Availability
+              SwitchListTile(
+                title: const Text('Available Now'),
+                subtitle: const Text('Show only available providers'),
+                value: _isAvailable,
+                onChanged: (value) {
+                  setModalState(() {
+                    _isAvailable = value;
+                  });
+                },
+              ),
+              
+              const SizedBox(height: 8),
+              
+              // Verification
+              SwitchListTile(
+                title: const Text('Verified Only'),
+                subtitle: const Text('Show only verified providers'),
+                value: _isVerified,
+                onChanged: (value) {
+                  setModalState(() {
+                    _isVerified = value;
+                  });
+                },
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Sort By
+              const Text('Sort By', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                initialValue: _sortBy,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'rating_desc', child: Text('Highest Rated')),
+                  DropdownMenuItem(value: 'rating_asc', child: Text('Lowest Rated')),
+                  DropdownMenuItem(value: 'price_asc', child: Text('Price: Low to High')),
+                  DropdownMenuItem(value: 'price_desc', child: Text('Price: High to Low')),
+                  DropdownMenuItem(value: 'distance', child: Text('Nearest First')),
+                  DropdownMenuItem(value: 'experience_desc', child: Text('Most Experienced')),
+                  DropdownMenuItem(value: 'newest', child: Text('Newest First')),
+                ],
+                onChanged: (value) {
+                  setModalState(() {
+                    _sortBy = value ?? 'rating_desc';
+                  });
+                },
+              ),
+              
+              const SizedBox(height: 24),
+              
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {});
+                    _load(widget.providerKey, category: ref.read(servicesCategoryProvider(widget.providerKey)));
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text('Apply Filters'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -73,26 +303,51 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search by name or category',
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search by name or category',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.primary, width: 2),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                      onChanged: (value) => ref.read(servicesSearchProvider(key).notifier).state = value,
+                    ),
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  const SizedBox(width: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: hasActiveFilters
+                          ? AppColors.primary
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.primary),
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.filter_list,
+                        color: hasActiveFilters
+                            ? Colors.white
+                            : AppColors.primary,
+                      ),
+                      onPressed: _showFilterBottomSheet,
+                    ),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppColors.primary, width: 2),
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-                onChanged: (value) => ref.read(servicesSearchProvider(key).notifier).state = value,
+                ],
               ),
               const SizedBox(height: 12),
               SizedBox(

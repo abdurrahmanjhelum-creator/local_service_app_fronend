@@ -12,14 +12,14 @@ const String kNotificationChannelDescription =
 // High Importance Android Notification Channel (Banner + Ringing Sound + Vibration)
 const AndroidNotificationChannel highImportanceChannel =
     AndroidNotificationChannel(
-  kNotificationChannelId,
-  kNotificationChannelName,
-  description: kNotificationChannelDescription,
-  importance: Importance.max,
-  playSound: true,
-  enableVibration: true,
-  showBadge: true,
-);
+      kNotificationChannelId,
+      kNotificationChannelName,
+      description: kNotificationChannelDescription,
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+      showBadge: true,
+    );
 
 /// Top-level background message handler for FCM (App Killed / Closed State)
 @pragma('vm:entry-point')
@@ -27,10 +27,13 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   try {
     await Firebase.initializeApp();
     debugPrint('📱 Handling FCM background message: ${message.messageId}');
-    
-    // FCM already displays a `notification` payload in background/killed.
-    // Only show a local notification for data-only messages.
-    if (message.notification != null) return;
+
+    // FCM automatically displays notification payload in background/killed state
+    // Only show local notification for data-only messages
+    if (message.notification != null) {
+      debugPrint('📱 FCM has notification payload - Android will auto-display');
+      return;
+    }
 
     final title = message.data['title']?.toString() ?? 'New Notification';
     final body = message.data['body']?.toString() ?? '';
@@ -69,11 +72,14 @@ Future<void> _showBackgroundNotification({
 
   final androidImplementation = localNotifications
       .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+        AndroidFlutterLocalNotificationsPlugin
+      >();
 
   if (androidImplementation != null) {
     await androidImplementation.requestNotificationsPermission();
-    await androidImplementation.createNotificationChannel(highImportanceChannel);
+    await androidImplementation.createNotificationChannel(
+      highImportanceChannel,
+    );
   }
 
   final androidDetails = AndroidNotificationDetails(
@@ -132,7 +138,9 @@ class FcmService {
     if (_isInitialized) return;
 
     if (kIsWeb) {
-      debugPrint('ℹ️ Web environment: Skipping mobile native FCM & Local Notifications');
+      debugPrint(
+        'ℹ️ Web environment: Skipping mobile native FCM & Local Notifications',
+      );
       _isInitialized = true;
       return;
     }
@@ -147,7 +155,9 @@ class FcmService {
       }
 
       // Android ke liye App Launcher Icon
-      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const androidSettings = AndroidInitializationSettings(
+        '@mipmap/ic_launcher',
+      );
 
       // iOS ke liye Sound + Alert Permissions
       const iosSettings = DarwinInitializationSettings(
@@ -172,19 +182,24 @@ class FcmService {
       // Android 13+ Runtime Permission Request & Channel Creation
       final androidImplementation = _localNotifications
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
+            AndroidFlutterLocalNotificationsPlugin
+          >();
 
       if (androidImplementation != null) {
         await androidImplementation.requestNotificationsPermission();
         // Register High Importance Notification Channel on Android Device
-        await androidImplementation.createNotificationChannel(highImportanceChannel);
+        await androidImplementation.createNotificationChannel(
+          highImportanceChannel,
+        );
       }
 
       // Setup FCM Listeners & Token Sync
       _setupFcmListeners();
 
       _isInitialized = true;
-      debugPrint('✅ System Ringing & FCM Notifications Initialized Successfully!');
+      debugPrint(
+        '✅ System Ringing & FCM Notifications Initialized Successfully!',
+      );
     } catch (e) {
       debugPrint('⚠️ System Notification Init Error: $e');
     }
@@ -194,11 +209,7 @@ class FcmService {
   void _setupFcmListeners() async {
     try {
       final messaging = FirebaseMessaging.instance;
-      await messaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+      await messaging.requestPermission(alert: true, badge: true, sound: true);
 
       // Get FCM Device Token & Sync with Backend
       final token = await messaging.getToken();
@@ -212,14 +223,24 @@ class FcmService {
         syncTokenWithBackend(newToken);
       });
 
-      // Foreground FCM Message Listener (deduped with socket local alerts)
+      // Foreground FCM Message Listener
+      // NOTE: When FCM sends a 'notification' payload, Android automatically shows it
+      // We only show local notification for data-only messages
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         final notification = message.notification;
-        final title = notification?.title ??
-            message.data['title']?.toString() ??
-            'New Notification';
-        final body =
-            notification?.body ?? message.data['body']?.toString() ?? '';
+
+        // If FCM has notification payload, Android will auto-show it
+        // Don't show duplicate local notification
+        if (notification != null) {
+          debugPrint(
+            '📱 FCM notification payload received - Android will auto-display',
+          );
+          return;
+        }
+
+        // For data-only messages, show local notification
+        final title = message.data['title']?.toString() ?? 'New Notification';
+        final body = message.data['body']?.toString() ?? '';
         showSystemNotification(
           title: title,
           body: body,

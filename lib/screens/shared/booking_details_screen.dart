@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/booking_provider.dart';
+import '../../providers/invoice_provider.dart';
 import '../../providers/socket_event_provider.dart';
 import '../../providers/ui_state_provider.dart';
 import '../../utils/api_constants.dart';
@@ -119,6 +120,35 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen> {
       context: context,
       builder: (context) => ReviewDialog(providerId: providerId, bookingId: bookingId),
     );
+  }
+
+  Future<void> _downloadInvoice(String bookingId) async {
+    final loading = ref.read(invoiceProvider).isLoading;
+    if (loading) return;
+
+    setState(() {
+      _isUpdatingStatus = true;
+    });
+
+    final success = await ref.read(invoiceProvider.notifier).getInvoiceByBookingId(bookingId);
+
+    if (!mounted) return;
+
+    setState(() {
+      _isUpdatingStatus = false;
+    });
+
+    if (success) {
+      final invoice = ref.read(invoiceProvider).currentInvoice;
+      if (invoice != null) {
+        await ref.read(invoiceProvider.notifier).downloadAndPrintInvoice(invoice);
+      }
+    } else {
+      final error = ref.read(invoiceProvider).errorMessage;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error ?? 'Failed to download invoice')),
+      );
+    }
   }
 
   IconData _getStatusIcon(String status) {
@@ -278,6 +308,36 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen> {
                           iconBackgroundColor: Colors.teal.withValues(alpha: 0.1),
                           iconColor: Colors.teal[700],
                         ),
+                        const SizedBox(height: 12),
+                        
+                        // 📄 INVOICE DOWNLOAD BUTTON
+                        if (booking.status == 'completed')
+                          InkWell(
+                            onTap: () => _downloadInvoice(booking.id),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.blue[50],
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.blue[200]!),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.picture_as_pdf, color: Colors.blue[700], size: 20),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Download Invoice',
+                                    style: TextStyle(
+                                      color: Colors.blue[700],
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         const SizedBox(height: 16),
                         
                         InfoRow(

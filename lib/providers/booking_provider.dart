@@ -65,6 +65,8 @@ class BookingNotifier extends Notifier<BookingState> {
     required String categoryName,
     required String bookingDate,
     required String address,
+    String? startTime,
+    String? endTime,
   }) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
@@ -73,6 +75,8 @@ class BookingNotifier extends Notifier<BookingState> {
         categoryName: categoryName,
         bookingDate: bookingDate,
         address: address,
+        startTime: startTime,
+        endTime: endTime,
       );
       await loadBookings();
       return true;

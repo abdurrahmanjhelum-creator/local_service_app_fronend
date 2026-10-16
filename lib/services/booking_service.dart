@@ -10,12 +10,16 @@ class BookingService {
     required String categoryName,
     required String bookingDate,
     required String address,
+    String? startTime,
+    String? endTime,
   }) async {
     final response = await _api.post(ApiConstants.bookings, {
       'provider': provider,
       'categoryName': categoryName,
       'bookingDate': bookingDate,
       'address': address,
+      ...startTime != null ? {'startTime': startTime} : {},
+      ...endTime != null ? {'endTime': endTime} : {},
     });
     return BookingModel.fromJson(asMap(response));
   }

@@ -24,13 +24,65 @@ class ServiceApi {
     return defaultCategories;
   }
 
-  Future<List<UserModel>> getProviders({String? category}) async {
+  Future<List<UserModel>> getProviders({
+    String? category,
+    double? minPrice,
+    double? maxPrice,
+    double? minRating,
+    bool? isAvailable,
+    bool? isVerified,
+    String? sortBy,
+    double? latitude,
+    double? longitude,
+    double? distanceKm,
+  }) async {
     var url = ApiConstants.services;
+    final queryParams = <String, String>{};
+    
     if (category != null && category.isNotEmpty) {
-      url = '$url?category=${Uri.encodeQueryComponent(category)}';
+      queryParams['category'] = category;
+    }
+    if (minPrice != null) {
+      queryParams['minPrice'] = minPrice.toString();
+    }
+    if (maxPrice != null) {
+      queryParams['maxPrice'] = maxPrice.toString();
+    }
+    if (minRating != null) {
+      queryParams['minRating'] = minRating.toString();
+    }
+    if (isAvailable != null) {
+      queryParams['isAvailable'] = isAvailable.toString();
+    }
+    if (isVerified != null) {
+      queryParams['isVerified'] = isVerified.toString();
+    }
+    if (sortBy != null) {
+      queryParams['sortBy'] = sortBy;
+    }
+    if (latitude != null) {
+      queryParams['latitude'] = latitude.toString();
+    }
+    if (longitude != null) {
+      queryParams['longitude'] = longitude.toString();
+    }
+    if (distanceKm != null) {
+      queryParams['distance'] = distanceKm.toString();
+    }
+
+    if (queryParams.isNotEmpty) {
+      url = '$url?${Uri(queryParameters: queryParams).query}';
     }
 
     final response = await _api.get(url);
+    
+    // Handle both list response and paginated response
+    if (response is Map && response['providers'] is List) {
+      return (response['providers'] as List)
+          .map((item) => UserModel.fromJson(asMap(item)))
+          .toList();
+    }
+    
     if (response is! List) return [];
     return response.map((item) => UserModel.fromJson(asMap(item))).toList();
   }

@@ -9,6 +9,7 @@ class UserModel {
   final double priceStarting;
   final int experienceYears;
   final bool isAvailable;
+  final bool isVerified;
   final double rating;
   final String? token;
   
@@ -28,6 +29,7 @@ class UserModel {
     this.priceStarting = 0,
     this.experienceYears = 0,
     this.isAvailable = true,
+    this.isVerified = false,
     this.rating = 5,
     this.token,
     this.latitude,
@@ -49,6 +51,7 @@ class UserModel {
       priceStarting: (json['priceStarting'] as num?)?.toDouble() ?? 0,
       experienceYears: (json['experienceYears'] as num?)?.toInt() ?? 0,
       isAvailable: json['isAvailable'] ?? true,
+      isVerified: json['isVerified'] ?? false,
       rating: (json['rating'] as num?)?.toDouble() ?? 5,
       token: json['token'],
       latitude: (json['latitude'] as num?)?.toDouble(),
