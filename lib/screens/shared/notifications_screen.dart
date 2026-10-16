@@ -43,6 +43,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         return Icons.sync_alt;
       case 'review_received':
         return Icons.star;
+      case 'message':
+        return Icons.chat_bubble_outline;
       default:
         return Icons.notifications;
     }
@@ -56,6 +58,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         return AppColors.primary;
       case 'review_received':
         return Colors.amber;
+      case 'message':
+        return Colors.indigo;
       default:
         return AppColors.secondary;
     }
@@ -107,12 +111,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 title: const Text('Notifications'),
                 actions: [
                   IconButton(
-                    icon: const Icon(Icons.notifications_active),
+                    icon: const Icon(Icons.refresh),
                     onPressed: () {
-                      // Test notification system
                       ref.read(notificationProvider.notifier).loadNotifications();
                     },
-                    tooltip: 'Test Notifications',
+                    tooltip: 'Refresh',
                   ),
                   if (notifications.isNotEmpty)
                     PopupMenuButton<String>(

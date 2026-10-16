@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/notification_model.dart';
+import '../services/fcm_service.dart';
 import '../services/notification_api.dart';
+import 'notification_alert_provider.dart';
 
 class NotificationState {
   final List<NotificationModel> notifications;
@@ -32,6 +34,8 @@ class NotificationState {
 
 class NotificationNotifier extends Notifier<NotificationState> {
   final NotificationApi _api = NotificationApi();
+  final Set<String> _knownIds = {};
+  bool _hasHydrated = false;
 
   @override
   NotificationState build() => NotificationState();
@@ -42,9 +46,25 @@ class NotificationNotifier extends Notifier<NotificationState> {
     }
     try {
       final res = await _api.getNotifications();
+      final list = res['notifications'] as List<NotificationModel>;
+      final unread = res['unreadCount'] as int;
+
+      // After first load, any NEW unread items = real-time alert (like real apps)
+      if (_hasHydrated && silent) {
+        for (final n in list) {
+          if (n.id.isEmpty || _knownIds.contains(n.id) || n.isRead) continue;
+          _emitRealtimeAlert(n);
+        }
+      }
+
+      _knownIds
+        ..clear()
+        ..addAll(list.map((n) => n.id).where((id) => id.isNotEmpty));
+      _hasHydrated = true;
+
       state = state.copyWith(
-        notifications: res['notifications'] as List<NotificationModel>,
-        unreadCount: res['unreadCount'] as int,
+        notifications: list,
+        unreadCount: unread,
         isLoading: false,
         errorMessage: null,
       );
@@ -54,6 +74,19 @@ class NotificationNotifier extends Notifier<NotificationState> {
         errorMessage: e.toString().replaceAll('Exception: ', ''),
       );
     }
+  }
+
+  void _emitRealtimeAlert(NotificationModel n) {
+    ref.read(notificationAlertProvider.notifier).show(
+          id: n.id,
+          title: n.title,
+          body: n.body,
+        );
+    FcmService().showSystemNotification(
+      title: n.title,
+      body: n.body,
+      payload: n.id,
+    );
   }
 
   Future<void> markAsRead(String id) async {
@@ -126,6 +159,10 @@ class NotificationNotifier extends Notifier<NotificationState> {
       return;
     }
 
+    if (notification.id.isNotEmpty) {
+      _knownIds.add(notification.id);
+    }
+
     final updatedList = [notification, ...state.notifications];
     final newUnread = notification.isRead ? state.unreadCount : state.unreadCount + 1;
 
@@ -133,6 +170,10 @@ class NotificationNotifier extends Notifier<NotificationState> {
       notifications: updatedList,
       unreadCount: newUnread,
     );
+
+    if (!notification.isRead) {
+      _emitRealtimeAlert(notification);
+    }
   }
 }
 

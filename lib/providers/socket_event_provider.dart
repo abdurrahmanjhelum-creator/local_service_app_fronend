@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/booking_model.dart';
 import '../models/notification_model.dart';
-import '../services/fcm_service.dart';
 import '../services/socket_service.dart';
 import '../utils/api_constants.dart';
 import 'booking_provider.dart';
@@ -30,14 +29,14 @@ class SocketEventController {
 
   void _startProductionPolling() {
     // Notification panel: refresh every 8s so new booking alerts appear without sockets
-    _notificationPollTimer = Timer.periodic(const Duration(seconds: 8), (_) {
+    // Fast poll so booking/chat alerts appear within a few seconds (Vercel has no sockets)
+    _notificationPollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       ref.read(notificationProvider.notifier).loadNotifications(silent: true);
     });
-    // Bookings: refresh every 12s for status changes
-    _bookingPollTimer = Timer.periodic(const Duration(seconds: 12), (_) {
+    _bookingPollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       ref.read(bookingProvider.notifier).loadBookings();
     });
-    debugPrint('ℹ️ Production mode: HTTP polling enabled for notifications & bookings');
+    debugPrint('ℹ️ Production mode: HTTP polling enabled for live notifications');
   }
 
   void _initListeners() {
@@ -71,19 +70,12 @@ class SocketEventController {
     _notificationSub = _socketService.onNotificationReceived.listen((data) {
       try {
         final notification = NotificationModel.fromJson(data);
+        // addNotificationToState also triggers in-app + system alert
         ref.read(notificationProvider.notifier).addNotificationToState(notification);
       } catch (e) {
         debugPrint('⚠️ Error parsing socket notification_received: $e');
         ref.read(notificationProvider.notifier).loadNotifications();
       }
-
-      final title = data['title']?.toString() ?? 'New notification';
-      final body = data['body']?.toString() ?? '';
-      FcmService().showSystemNotification(
-        title: title,
-        body: body,
-        payload: data['_id']?.toString(),
-      );
     });
   }
 
